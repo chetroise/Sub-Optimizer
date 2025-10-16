@@ -33,23 +33,3 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
-        run: pip install requests
-
-      - name: Run script to process config
-        env:
-          SUB_URL: ${{ secrets.SUB_URL }}
-        run: python process_config.py
-
-      - name: Commit and push if changed
-        run: |
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions-bot@github.com"
-          git add optimized_config.json
-          # 仅在文件内容有变化时才执行提交，避免产生空的提交记录
-          if ! git diff --staged --quiet; then
-            git commit -m "chore: auto-update sing-box config"
-            git push
-          else
-            echo "No changes to commit."
-          fi
