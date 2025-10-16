@@ -1,0 +1,55 @@
+name: Update Sing-Box Config
+
+on:
+  # 触发器 1: 当向 main 分支提交(push)代码时 (仅在特定文件变化时)
+  push:
+    branches:
+      - main # 如果你的主分支名叫 master，请把这里改成 master
+    paths:
+      - 'process_config.py'
+      - '.github/workflows/update_subscription.yml'
+
+  # 触发器 2: 允许在 Actions 页面手动点击运行
+  workflow_dispatch:
+
+  # 触发器 3: 定时运行 (每6小时一次)
+  schedule:
+    - cron: '0 */6 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # 给予工作流向仓库写入文件的权限
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run script to process config
+        env:
+          SUB_URL: ${{ secrets.SUB_URL }}
+        run: python process_config.py
+
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions-bot@github.com"
+          git add optimized_config.json
+          # 仅在文件内容有变化时才执行提交，避免产生空的提交记录
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: auto-update sing-box config"
+            git push
+          else
+            echo "No changes to commit."
+          fi
